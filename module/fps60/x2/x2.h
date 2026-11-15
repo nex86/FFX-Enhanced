@@ -1,0 +1,194 @@
+// SPDX-License-Identifier: Apache-2.0
+// Modified for the RevoFX FFX module (2026-11): see fps60/NOTICE.txt
+// x2: the 60fps mod for FFX-2 HD, built as fps60_ffx2.dll. The shared loader (dbghelp.dll, src/loader) loads it
+// when the host is FFX-2.exe. Its own project and code path: it links nothing from the FFX mod (fps60.h).
+// Files: fps60x2.ini (optional settings) / fps60x2.log next to FFX-2.exe.
+// Addresses: gva = Ghidra VA (base 0x400000), rt = runtime; every address comes from x2_sigs.cpp.
+// Words used throughout the code (invocation, render-only, hold, pass, ...): GLOSSARY.txt next to this file.
+// Details (outer repo G:\Work\ffx2-fps60): docs/PLAN.md, re/MAINLOOP.md
+#pragma once
+
+#define WIN32_LEAN_AND_MEAN
+#define NOMINMAX
+#include <windows.h>
+#include <stdint.h>
+#include <stddef.h>
+#include "../f60_compat.h"
+
+namespace x2 {
+
+
+// ---------------------------------------------------------------- x2_log.cpp
+void log_open();                                 // fps60x2.log next to FFX-2.exe (keeps 3 old sessions)
+void log_line(const char* fmt, ...);
+void game_dir(wchar_t* out, size_t cap);         // with trailing '\'
+bool hot_copy();                                 // this copy was loaded by a dev hot reload (fps60x2_live_*.dll)
+void log_close();                                // dev hot reload: hand the log to the next copy
+void log_reopen();                               // dev hot reload failed: take it back
+
+// ---------------------------------------------------------------- x2_config.cpp
+struct Config {
+    int  enabled;                                // [x2] enabled
+    int  pacing;                                 // 1 = 60 Hz (divider 1 + exec alternation), 0 = stock
+    int  exec_method;                            // 0 = game setter, 1 = raw byte write
+    int  unpack_timeout_s;
+    int  log_pacing_events;
+};
+extern Config g_cfg;
+void config_load();
+int  config_row(const char* row_id, int def);    // [rows] X2-ROW-ID=0|1
+bool on_wine();                                  // running under Wine / Proton
+void config_str(const char* sect, const char* key, char* out, int size, const char* def);   // ASCII string key
+bool config_write(const char* sect, const char* key, const char* value);   // fps60x2.ini (X2-CFG-MENU)
+
+// ---------------------------------------------------------------- x2_sigs.cpp
+uint8_t*    exe_base();
+uint32_t    rt_to_gva(const void* rt);
+bool        sigs_text_ready();                   // DRM unpack probe
+bool        sigs_resolve_all();                  // false = a required sig failed -> install nothing
+bool        safe_read_u32(const void* p, uint32_t* out);
+bool        safe_copy(void* dst, const void* src, size_t n);
+// Row helpers: a pattern must match exactly once in .text (logged; expected_gva is logged only).
+uint8_t*    sig_find(const char* label, const char* pattern, uint32_t expected_gva);
+bool        sig_match(const void* at, const char* pattern);   // bytes at a resolved address (fault-safe)
+uint8_t*    abs_operand(const char* name, const uint8_t* at); // absolute address operand, must be inside FFX-2.exe
+uint8_t*    call_target(const uint8_t* site);    // target of E8 rel32, or null
+bool        in_image(const void* p);
+
+typedef void(__cdecl* set_exec_t)(int);
+typedef void(__cdecl* set_divider_t)(uint32_t);
+extern set_exec_t         g_set_exec;
+extern uint8_t*           g_get_exec;           // Sg_GetCurExecFrames (effective getter)
+extern set_divider_t      g_set_divider;         // trampoline once hooked, else the original
+extern uint8_t*           g_sg_mainloop;
+extern uint8_t*           g_mainloop_callsite;   // E8 of CALL Sg_MainLoop in the runner
+extern volatile int8_t*   g_exec_byte;
+extern volatile uint32_t* g_divider;
+extern volatile int32_t*  g_backlog_count;
+extern volatile uint32_t* g_frame_counter;
+
+// ---------------------------------------------------------------- x2_pattern.cpp
+// Byte pattern "55 8B ?? EC" (?? = any byte): bytes b, mask m (1 = must match), length.
+struct BytePattern { uint8_t b[96]; uint8_t m[96]; int len; };
+bool parse_pattern(const char* text, BytePattern* p);           // false: bad hex, half a byte, empty or too long
+bool pattern_matches(const uint8_t* at, const BytePattern& p);
+bool matches_at(const uint8_t* at, const char* pattern);        // parse + match (false for a bad pattern)
+int  count_hits(const uint8_t* lo, const uint8_t* hi, const BytePattern& p, uint8_t** first);   // 0, 1 or 2 (= more)
+// Hits in a loaded module's executable sections: 0, 1, 2 (= more than one), -1 = bad headers or pattern.
+int  scan_module(uint8_t* mod, uint32_t size, const char* pattern, uint8_t** first);
+
+// ---------------------------------------------------------------- x2_hooks.cpp
+extern volatile LONG g_disabled;                 // any fault -> 1, hooks pass through
+extern bool g_divider_hooked;
+bool hooks_install_mainloop();                   // init thread
+bool patch_call_rel32(uint8_t* site, void* old_target, void* new_target);   // verified CALL retarget
+bool patch_u32(void* at, uint32_t v);            // 4-byte write through VirtualProtect (atomic if aligned)
+bool hook_entry(const char* name, void* target, void* detour, void** orig); // MinHook entry hook
+void hook_remove(void* target);                  // undo hook_entry (rows that install several hooks as one)
+void hook_disable_all();                         // dev hot reload: every MinHook hook off (original prologues back)
+void patch_revert_all();                         // dev hot reload: every patch_u32 write undone, newest first
+#ifdef FPS60_DEV
+void reload_poll();                              // x2_reload.cpp: reload key = load fps60x2_next.dll in place of this copy
+#endif
+void hooks_install_divider_on_game_thread();     // first pre()
+
+// ---------------------------------------------------------------- x2_pacing.cpp
+// 60 Hz works by running the game's main loop (Sg_MainLoop) once per screen refresh instead of every second one, and
+// telling it on every other run to skip the game logic and only draw. Each run of the main loop is an "invocation";
+// pacing_kind() says what the current one is:
+enum InvKind {
+    INV_LOGIC = 0,         // runs the game logic and draws (the game's normal frame)
+    INV_RENDER_ONLY = 1,   // draws the same game state again, no logic: the extra frame that makes 60 fps
+    INV_BACKLOG = 2,       // the game is behind and catches up: logic, no draw
+    INV_STOCK = 3,         // 60 Hz is off right now (FMV, menu, load...): the game runs as it shipped
+};
+void pacing_pre();                               // before every invocation: picks its kind
+void pacing_post();
+bool pacing_divider_request(uint32_t req);       // the game asks for a frame divider; true = swallowed (kept at 1)
+int  pacing_kind();
+inline bool render_only() { return pacing_kind() == INV_RENDER_ONLY; }
+void pacing_hold_stock(const char* who, bool hold); // a row asks for stock pacing (e.g. FMV); holds nest
+void pacing_set(bool on);                         // runtime 60 Hz on/off ([x2] pacing; X2-CFG-MENU)
+int   pacing_pass();                              // the pass this invocation runs: 0 = logic, 1 .. N-1 render-only
+int   pacing_period();                            // N: invocations per logic tick (2 = 60 fps, 3 = 90, 4 = 120, 8 = 240)
+float pacing_t();                                 // where this invocation draws between tick k-1 and k: (pass + 1) / N
+int   pacing_limb_pass();                         // X2-SMOOTH-003: the render-only pass that takes the limbs' half step
+bool  pacing_rate(int fps);                       // 60 .. 240 in steps of 30; false = above 60 refused (limiter not found)
+bool pacing_left_out();                           // module: this INV_BACKLOG invocation is drawn - a logic tick in place of a render-only invocation, a render-only one follows
+void pacing_adaptive(bool on);                    // module: leave render-only invocations out when the PC is below 60 fps (default) / fixed alternation
+void pacing_leave_now(const char* why);           // stock divider + exec 1 now (X2-LOAD-001: load mode)
+void pacing_turbo(bool on);                       // X2-PACE-TURBO: booster engaged -> logic on every invocation
+void pacing_flip_phase();                         // diagnostic: next invocation repeats the last kind (X2-DIAG-CAPTURE-PHASEFLIP)
+void pacing_inject_backlog();                     // diagnostic: one no-draw logic invocation (X2-DIAG-CAPTURE-BACKLOG)
+bool devturbo_held();                             // X2-DEV-TURBO key held
+int  pacing_menudiv2_default();                   // X2-PACE-MENUDIV2 (Config "Fast Results"): 1 under Wine / Proton
+bool pacing_menudiv2_get();
+void pacing_menudiv2_set(bool on);
+bool load_idlehold_get();                         // X2-LOAD-001 holds (Config page switches)
+void load_idlehold_set(bool on);
+bool load_battlehold_get();
+void load_battlehold_set(bool on);
+
+// ---------------------------------------------------------------- x2_magic_mods.cpp
+typedef void (*magic_load_fn)(uint8_t* base, uint32_t size, const char* name);   // loader lock
+typedef void (*magic_unload_fn)(uint8_t* base);
+bool magic_mods_subscribe(const char* row, magic_load_fn on_load, magic_unload_fn on_unload);  // init thread
+
+// ---------------------------------------------------------------- x2_rows.cpp
+// A row = one ledger row's mitigation (ID "X2-..." = [rows] key). install() runs once on the init thread after
+// the signature scan; pre()/post() run around every invocation while the row is on.
+struct Row {
+    const char* id;
+    const char* summary;
+    int         default_on;
+    bool (*install)();           // false = row stays off (logged)
+    void (*pre)();               // optional
+    void (*post)();              // optional
+    int         on;
+    int         installed;       // install() ran and succeeded at startup
+    void (*stop)();              // optional: undo state held between invocations (dev hot reload, x2_reload.cpp)
+};
+void rows_install_all();
+void rows_stop_all();                           // dev hot reload: Row::stop of every row that is on
+bool row_on(const char* id);
+bool perf_on();                                 // X2-DIAG-PERF (x2_perf.cpp)
+LONGLONG perf_now();
+void perf_row(int idx, LONGLONG dt);
+void perf_walk(LONGLONG dt);
+void perf_inv_begin();
+void perf_inv_end();
+bool row_set(Row& r, bool on);                  // runtime on/off of an installed row (false: not installed)
+bool menu002_user_on();                         // X2-MENU-002 user switch (Num 9, X2-CFG-MENU)
+void menu002_set_user(bool on);
+const uint8_t* x2_text(int id);                 // T_* id (x2_text_strings.h) -> game-encoded text, current language
+void rows_pre();
+void rows_post();
+
+// Cross-row hooks
+uint8_t* mag006_entry();                         // Ppp_ProgramStep entry (null if X2-MAG-006 is off)
+bool     mag006_pause_exe_caller(uint8_t* ret);  // X2-MAG-006 pauses this EXE call site like a DLL caller
+typedef void (*step_note_fn)(void* prog, int cls, int parts_before, int parts_after, int ret);
+void*    mag006_cur_step(int* cls);               // program of the running particle step (cls 1 DLL, 2 EXE, 3 field)
+void     mag006_set_step_note(step_note_fn fn);   // diagnostics: called after each Ppp_ProgramStep
+// X2-DIAG-PPPRATE: called after every particle step (spell, game and field) with the program clock (+8) around it
+typedef void (*rate_note_fn)(void* prog, int cls, const void* ret, int32_t clock_before, int32_t clock_after);
+void     mag006_set_rate_note(rate_note_fn fn);
+bool     fx010_pause_field_step(void* prog);      // X2-FX-010: run this field program step paused?
+void     fx010_pausing_field_step(bool on);       // X2-FX-010: brackets a step it paused (its spawn CALL skips)
+bool     pppops_prog_marked(void* prog);          // X2-MAG-006-UNPAUSE-OPS test (X2-DIAG-PPPOPS)
+void     mag026_draw_record(uint8_t* head, uint8_t* nd, void* cb);   // X2-MAG-020 draw-only walk -> X2-MAG-026
+bool     mag008_list_active();                 // X2-MAG-008: a PASS-LIST DLL (or its chain) is loaded
+bool     mag008_pass_late(uint8_t* base, const char* name);   // X2-MAG-008: pass an already loaded DLL, no chain
+// X2-DIAG-BLINK -> X2-MAG-035, after each render-only frame: draw_diff > 0 = it drew fewer things than the logic frames
+// on both sides, < 0 = more, 0 = neither
+void     mag035_pair(uint8_t* base, int draw_diff);
+int      mag025_walk_info();                     // X2-MAG-025: held mode (bits 0-7) | (1 + walk pass) << 8, 0 = no walk
+
+// Rollback: a span is snapshotted at the start of every render-only invocation and written back at its end.
+typedef bool (*span_resolver_t)(void* ctx, uint8_t** base, uint32_t* len);
+bool rollback_add_static(const char* row_id, uint8_t* rt, uint32_t len);
+bool rollback_add_dynamic(const char* row_id, span_resolver_t fn, void* ctx, uint32_t max_len);
+void rollback_pre();
+void rollback_post();
+
+} // namespace x2

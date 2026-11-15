@@ -1,0 +1,212 @@
+// SPDX-License-Identifier: Apache-2.0
+// Modified for the RevoFX FFX module (2026-11): see fps60/NOTICE.txt
+// X2-DIAG-OP114 (diagnostic, off, observe only except DROP): logs the dressphere-change outfit "peel" draw.
+//
+// The peel is drawn by the effect-script op 0x114 (FUN_00875d00, in the DLL op table at magic service +0xC24). The row
+// points that table entry at a logging hook; for the first X2-DIAG-OP114-N calls (1200) it logs the invocation kind,
+// the script position and word, the matrix and unit fields the op reads, the flags after the call, the returned PC,
+// and the HD VFX instances and vertex-pool slots the op draws through (and the skip flags).
+// X2-DIAG-OP114-DROP (ini, 0; Numpad 8 cycles it): an A/B test that skips calls: 1 both on render-only invocations,
+// 2 the first call of each invocation, 3 the second, 4 both always.
+// Also hooked and logged: op 0x10F (the DressUpFast shader parameters, X2-DIAG-OP114-N10F calls), the main loop's
+// release of that effect, and FUN_00859e00 (the DressUpMelt shader parameters).
+// History: re/ledger/XFADE-BLINK.md.
+#include "../x2.h"
+#include <stdio.h>
+
+namespace x2 {
+
+typedef uint8_t* (__cdecl* op_t)(uint8_t* scr, uint8_t* pc);
+typedef uint8_t* (__cdecl* lookup_t)(uint32_t lo, int32_t hi);
+static op_t g_orig = nullptr;
+static lookup_t g_lookup = nullptr;      // Hd_VfxLookup 0x4563D0
+static uint8_t** g_pool = nullptr;       // &DAT_00dd0204
+static uint32_t* g_skip = nullptr;       // &g_dwSkipFlag0 0xDF6438 (+4 0xDF643C, +8 0xDF6440)
+static volatile LONG g_left = 0;
+static int g_drop = 0;                   // game thread
+static int g_call = 0;                   // call index in this invocation (game thread)
+static uint8_t* g_lastpc = nullptr;
+extern Row row_DIAGOP114;
+static op_t g_orig10f = nullptr;
+static float* g_dress_t = nullptr;       // 0x18E4D4C
+static float* g_dress_c = nullptr;       // 0x18E4D58
+static int32_t* g_dress_f = nullptr;     // 0xD6F7A0
+static volatile LONG g_left10f = 0;
+typedef void(__cdecl* melt_t)(void* actor, int type, float* bounds, float a, float b, float c);
+static melt_t g_melt = nullptr;
+static void __cdecl h_melt(void* actor, int type, float* bounds, float a, float b, float c) {
+    if (row_DIAGOP114.on && g_left10f > 0 && InterlockedDecrement(&g_left10f) >= 0) {
+        static const char* const K[4] = { "LOGIC", "RENDER", "BACKLOG", "STOCK" };
+        __try {
+            log_line("MELT %s actor %p type %d a %.4f b %.4f c %.4f bounds %.3f %.3f", K[pacing_kind() & 3], actor, type,
+                     a, b, c, bounds[1], bounds[5]);
+        } __except (EXCEPTION_EXECUTE_HANDLER) {}
+    }
+    g_melt(actor, type, bounds, a, b, c);
+}
+static int32_t* g_fx_flag = nullptr;     // 0x18E4D50
+static uint32_t* g_fx_list = nullptr;    // 0x1E1CC00 [4]
+
+static uint8_t* __cdecl h_op10f(uint8_t* scr, uint8_t* pc) {
+    uint8_t* r = g_orig10f(scr, pc);
+    if (row_DIAGOP114.on && g_left10f > 0 && InterlockedDecrement(&g_left10f) >= 0) {
+        __try {
+            static const char* const K[4] = { "LOGIC", "RENDER", "BACKLOG", "STOCK" };
+            log_line("OP10F %s pc %p word %04X ret %+d | t %.4f centre %.3f flag %d", K[pacing_kind() & 3], pc,
+                     *(uint16_t*)(scr + 0x21A), (int)(r - pc), *g_dress_t, *g_dress_c, *g_dress_f);
+        } __except (EXCEPTION_EXECUTE_HANDLER) {}
+    }
+    return r;
+}
+
+static void pre() {
+    if (g_fx_list && g_left10f > 0 && g_fx_list[0]) {
+        static const char* const K[4] = { "LOGIC", "RENDER", "BACKLOG", "STOCK" };
+        InterlockedDecrement(&g_left10f);
+        __try {
+            log_line("OP10F-PRE %s flag %d list %08X %08X %08X %08X", K[pacing_kind() & 3], *g_fx_flag, g_fx_list[0],
+                     g_fx_list[1], g_fx_list[2], g_fx_list[3]);
+        } __except (EXCEPTION_EXECUTE_HANDLER) {}
+    }
+    static bool was = false;
+    bool down = (GetAsyncKeyState(VK_NUMPAD8) & 0x8000) != 0;
+    if (down && !was) {
+        g_drop = (g_drop + 1) % 5;
+        static const char* const D[5] = { "none", "both calls on RENDER", "1st call (k0 FrameBuffer)",
+                                          "2nd call (k1 dds)", "both calls always" };
+        log_line("Num 8: X2-DIAG-OP114-DROP %d (%s)", g_drop, D[g_drop]);
+    }
+    was = down;
+}
+
+// pool index and current buffer write offset (FUN_0049fb40 / FUN_0049fa10(0))
+static void pool_state(int* idx, uint32_t* wr) {
+    *idx = -1; *wr = 0;
+    uint8_t* mgr = *g_pool;
+    if (!mgr) return;
+    int* st = *(int**)(mgr + 8);
+    if (!st) return;
+    *idx = st[0];
+    if (st[1] == 0) return;
+    uint8_t* buf = *(uint8_t**)(st[3] + st[0] * 4);
+    *wr = *(uint32_t*)(buf + 8) - *(uint32_t*)(buf + 4);
+}
+
+static uint8_t* __cdecl h_op(uint8_t* scr, uint8_t* pc) {
+    int i0 = -1; uint32_t w0 = 0;
+    bool log = row_DIAGOP114.on && g_left > 0;
+    if (log) __try { pool_state(&i0, &w0); } __except (EXCEPTION_EXECUTE_HANDLER) {}
+    g_call = (pc > g_lastpc) ? g_call + 1 : 0;
+    g_lastpc = pc;
+    bool render = pacing_kind() == INV_RENDER_ONLY;
+    bool drop = (*(uint16_t*)(scr + 0x21A) >> 12) == 1 &&
+                ((g_drop == 1 && render) || (g_drop == 2 && g_call == 0) || (g_drop == 3 && g_call == 1) || g_drop == 4);
+    uint8_t* r = drop ? pc + 0x10 : g_orig(scr, pc);
+    if (log && InterlockedDecrement(&g_left) >= 0) {
+        __try {
+            uint8_t* unit = *(uint8_t**)(scr + 0x220);
+            int k = unit ? unit[0x1E] : 0;
+            int slot = *(int*)(scr + (0xD8 + k) * 4);
+            const float* m = (const float*)(scr + 0x80);
+            const float* u = unit ? (const float*)(unit + 0x30) : nullptr;
+            int i1; uint32_t w1;
+            pool_state(&i1, &w1);
+            char inst[256]; int n = 0;
+            for (uint32_t key = 0; key < 4; key++) {
+                uint8_t* in = g_lookup(key, 0x389);
+                if (!in) { n += sprintf_s(inst + n, sizeof(inst) - n, " k%u -", key); continue; }
+                uint8_t* geom = *(uint8_t**)(in + 0x88);
+                uint32_t vtx = (geom && i1 >= 0) ? *(uint32_t*)(geom + (i1 + 2) * 0x1C) : 0;
+                n += sprintf_s(inst + n, sizeof(inst) - n, " k%u %p vtx %08X n %d", key, in, vtx,
+                               geom ? *(int*)(geom + 4) : -1);
+            }
+            static const char* const K[4] = { "LOGIC", "RENDER", "BACKLOG", "STOCK" };
+            log_line("OP114 %s scr %p pc %p word %04X slot %d (k %d) mtx (%.2f %.2f %.2f) unit30 (%.2f %.2f %.2f %.2f) "
+                     "flags %08X ret %+d call %d%s | skip %u %u %u pool %d +%X -> %d +%X |%s",
+                     K[pacing_kind() & 3], scr, pc, *(uint16_t*)(scr + 0x21A), slot, k, m[12], m[13], m[14],
+                     u ? u[0] : 0.0f, u ? u[1] : 0.0f, u ? u[2] : 0.0f, u ? u[3] : 0.0f,
+                     *(uint32_t*)(scr + 0x100), (int)(r - pc), g_call, drop ? " DROPPED" : "", g_skip[0], g_skip[1], g_skip[2], i0, w0, i1, w1, inst);
+        } __except (EXCEPTION_EXECUTE_HANDLER) {}
+    }
+    return r;
+}
+
+static bool install() {
+    uint8_t* at = sig_find("X2-DIAG-OP114 MagicFile_Start table push",
+        "0F 94 C0 50 E8 ?? ?? ?? ?? 68 ?? ?? ?? ?? C7 05 ?? ?? ?? ?? 01 00 00 00 FF 15", 0x8578D1);
+    uint8_t* svc = at ? abs_operand("service table", at + 0x0A) : nullptr;
+    if (!svc) return false;
+    // FUN_004563d0: PUSH EBP; MOV EBP,ESP; MOV ECX,[EBP+8]; MOV EDX,[EBP+0xC]; MOV EAX,ECX; OR EAX,EDX; JZ +0x10; ...;
+    // CALL 0x4b31d0 (rel32 pinned: FUN_00456380 has the same shape with CALL 0x4b30f0)
+    uint8_t* lk = sig_find("X2-DIAG-OP114 Hd_VfxLookup",
+        "55 8B EC 8B 4D 08 8B 55 0C 8B C1 0B C2 74 10 52 51 E8 ?? ?? ?? ?? 8B C8 E8 E3 CD 05 00 5D C3 33 C0 5D C3",
+        0x4563D0);
+    // FUN_00451310: MOV ECX,[0x00dd0204]; XOR EAX,EAX; CMP [ECX+8],EAX; SETNZ AL; RET
+    uint8_t* pl = sig_find("X2-DIAG-OP114 pool test", "8B 0D ?? ?? ?? ?? 33 C0 39 41 08 0F 95 C0 C3", 0x451310);
+    // FUN_00456980: CMP [0x00df6438],0; JNZ +0x0B; MOV ECX,[0x00dcda04]; JMP 0x465030 (rel32 pinned: FUN_00453aa0
+    // has the same shape with JMP 0x482140)
+    uint8_t* sk = sig_find("X2-DIAG-OP114 skip flag test", "83 3D ?? ?? ?? ?? 00 75 0B 8B 0D ?? ?? ?? ?? E9 9C E6 00 00",
+        0x456980);
+    if (!lk || !pl || !sk) return false;
+    g_pool = (uint8_t**)abs_operand("pool manager ptr", pl + 2);
+    g_skip = (uint32_t*)abs_operand("skip flag 0", sk + 2);
+    if (!g_pool || !g_skip) return false;
+    g_lookup = (lookup_t)lk;
+    uint8_t* tab = (uint8_t*)(uintptr_t)*(uint32_t*)(svc + 0xC24);
+    if (!in_image(tab)) { log_line("  X2-DIAG-OP114: service +0xC24 = %p not in the image - off", tab); return false; }
+    uint32_t* entry = (uint32_t*)(tab + 0x14 * 4);
+    uint8_t* fn = (uint8_t*)(uintptr_t)*entry;
+    // PUSH EBP; MOV EBP,ESP; SUB ESP,0x114; cookie; MOV ECX,[EBP+0xC]; PUSH EBX; PUSH EDI; MOV EDI,[EBP+8]
+    if (!in_image(fn) || !sig_match(fn, "55 8B EC 81 EC 14 01 00 00 A1 ?? ?? ?? ?? 33 C5 89 45 FC 8B 4D 0C 53 57 8B 7D 08")) {
+        log_line("  X2-DIAG-OP114: op table entry 0x114 = %p is not FUN_00875d00 - off", fn);
+        return false;
+    }
+    g_orig = (op_t)fn;
+    // op 0x10F: FUN_0085a090 prologue, and its dressUp globals
+    uint32_t* e10f = (uint32_t*)(tab + 0x0F * 4);
+    uint8_t* f10f = (uint8_t*)(uintptr_t)*e10f;
+    uint8_t* dt = sig_find("X2-DIAG-OP114 dressUp sweep",
+        "D9 05 ?? ?? ?? ?? D9 C0 DE CA D9 CA DE E1 D9 9D 24 FE FF FF D9 85 24 FE FF FF D9 15 ?? ?? ?? ?? D9 C9 DC 05", 0x85A924);
+    uint8_t* df = sig_find("X2-DIAG-OP114 dressUp flag", "C7 05 ?? ?? ?? ?? 01 00 00 00 EB 39 83 F8 01 75 34", 0x85A95E);
+    if (in_image(f10f) && dt && df &&
+        sig_match(f10f, "55 8B EC 81 EC E4 01 00 00 A1 ?? ?? ?? ?? 33 C5 89 45 FC D9 05 ?? ?? ?? ?? 53 56")) {
+        g_dress_t = (float*)abs_operand("dressUp t", dt + 2);
+        g_dress_c = (float*)abs_operand("dressUp centre", dt + 0x1C);
+        g_dress_f = (int32_t*)abs_operand("dressUp flag", df + 2);
+        uint8_t* rl = sig_find("X2-DIAG-OP114 effect release check",
+            "83 3D ?? ?? ?? ?? 00 C7 05 ?? ?? ?? ?? 00 00 00 00 75 3B 83 3D ?? ?? ?? ?? 00 74 32", 0x60559D);
+        if (rl) {
+            g_fx_flag = (int32_t*)abs_operand("fx flag", rl + 2);
+            g_fx_list = (uint32_t*)abs_operand("fx list", rl + 0x15);
+        }
+        uint8_t* mf = sig_find("X2-DIAG-OP114 FUN_00859e00", "55 8B EC 51 56 8B 75 10 57 D9 46 14 D8 66 04 D9 5D 10",
+            0x859E00);
+        if (mf && !hook_entry("X2-DIAG-OP114 melt", mf, (void*)&h_melt, (void**)&g_melt)) g_melt = nullptr;
+        if (g_dress_t && g_dress_c && g_dress_f) {
+            g_orig10f = (op_t)f10f;
+            g_left10f = config_row("X2-DIAG-OP114-N10F", 1500);
+            if (patch_u32(e10f, (uint32_t)(uintptr_t)&h_op10f))
+                log_line("  X2-DIAG-OP114: op 0x10F entry gva=0x%08X -> stub (FUN gva=0x%08X, 0x0085A090); t gva=0x%08X "
+                         "(0x018E4D4C) centre 0x%08X (0x018E4D58) flag 0x%08X (0x00D6F7A0)", rt_to_gva(e10f),
+                         rt_to_gva(f10f), rt_to_gva(g_dress_t), rt_to_gva(g_dress_c), rt_to_gva(g_dress_f));
+        }
+    } else {
+        log_line("  X2-DIAG-OP114: op 0x10F entry %p / dressUp sites not as proven - op 0x10F not logged", f10f);
+    }
+    g_left = config_row("X2-DIAG-OP114-N", 1200);
+    g_drop = config_row("X2-DIAG-OP114-DROP", 0);
+    if (g_drop < 0 || g_drop > 4) g_drop = 0;
+    if (!patch_u32(entry, (uint32_t)(uintptr_t)&h_op)) return false;
+    log_line("  X2-DIAG-OP114: entry gva=0x%08X (0x00D6F808) -> stub (FUN gva=0x%08X, 0x00875D00), %ld calls logged, drop mode %d; "
+             "pool ptr gva=0x%08X (0x00DD0204), skip gva=0x%08X (0x00DF6438)",
+             rt_to_gva(entry), rt_to_gva(fn), (LONG)g_left, g_drop, rt_to_gva(g_pool), rt_to_gva(g_skip));
+    return true;
+}
+
+Row row_DIAGOP114 = {
+    "X2-DIAG-OP114",
+    "diagnostic: log OPU op 0x114 (dressphere outfit peel draw) inputs, HD VFX instances and vertex pool per call",
+    0, install, pre, nullptr, 0
+};
+
+} // namespace x2

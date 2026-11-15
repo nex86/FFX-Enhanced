@@ -1,0 +1,62 @@
+# 60 fps patch inside the RevoFX FFX module - origin, licence, changes
+
+This folder is a modified copy of **FFX-60fps** by Peter Nguyen, https://github.com/peternguyenst/FFX-60fps, commit `b541a6a`
+(2026), licensed under the **Apache License 2.0** (`LICENSE` in this folder, unchanged). `minhook\` is MinHook 1.3.4 by Tsuda
+Kageyu, BSD 2-Clause (`minhook\LICENSE.txt`), unchanged except the include path of `MinHook.h` in `hook.c`.
+
+What the licence allows and asks for (section 4): the source may be copied, changed and distributed, also as part of another work
+and in binary form, when (a) the licence text goes with it, (b) changed files say that they were changed, (c) the copyright and
+attribution notices of the source stay, (d) a NOTICE file of the source is passed on (FFX-60fps has none). There is no copyleft:
+the rest of the module keeps its own licence. The names of the original project may not be used to endorse this work.
+
+- `x\` = `src/x` (FINAL FANTASY X), `x2\` = `src/x2` (FINAL FANTASY X-2). `SPDX-License-Identifier: Apache-2.0` stays in every file.
+- Every file carries the line `Modified for the RevoFX FFX module (2026-11): see fps60/NOTICE.txt`.
+- Files written new for the module (not part of FFX-60fps): `f60_compat.h`, `f60_seh.cpp`, `x\fx_module.cpp`, `x2\x2_module.cpp`
+  (and `..\ffx_fps60.cpp`, `..\ffx_fps60.h` outside this folder).
+
+## Changes to the copied source
+
+Mechanical (`tools/fps60_import.py`):
+
+1. `x\`: every file wrapped in `namespace fx` (both mods are linked into one DLL; `x2\` already was `namespace x2`); the C entry
+   points `fp_pre` / `fp_post` renamed to `fx_pre` / `fx_post`.
+2. Removed, because the module replaces them or cannot use them:
+   - DLL entry, log file, ini file, dev hot reload: `x\proxy.cpp`, `x\log.cpp`, `x\config.cpp`, `x\reload.cpp`, `x2\x2_main.cpp`,
+     `x2\x2_log.cpp`, `x2\x2_config.cpp`, `x2\x2_reload.cpp` -> `x\fx_module.cpp`, `x2\x2_module.cpp` (start from the module,
+     RevoFX's log, RevoFX's settings).
+   - the capture engine `x\capture.cpp`, `x\capture_config.cpp`, `x\capture.h` (developer tool; stubs in `fx_module.cpp`).
+   - rows that hook the real DXGI swap chain (the swap chain is RevoFX's): `x\rows\VSYNC.cpp`, `x2\rows\X2-DIAG-PRESENT.cpp` (with the
+     `X2-VSYNC` row), `X2-DIAG-LUMA.cpp`, `X2-DIAG-BLINK.cpp`, `X2-DIAG-AUTOBLINK.cpp`, `X2-DIAG-CAPTURE.cpp`.
+   - rows that write crash dumps through dbghelp: `x\rows\DIAG-HANGDUMP.cpp`, `x2\rows\X2-DIAG-CRASH.cpp`.
+   - the mods' own pages in the games' Config menu (a second settings system): `x\rows\CFG-MENU.cpp`, `x2\rows\X2-CFG-MENU.cpp`.
+   - `x\rows\PERF-002.cpp` (the fall back to 30 fps; replaced by the adaptive pacing below).
+   - `x2\rows\X2-DIAG-RATE.cpp` (diagnostic; its assembler stubs do not build with clang).
+
+By hand:
+
+3. `x\pacing.cpp`, `x2\x2_pacing.cpp`: **adaptive pacing** - the wall clock decides when a render-only invocation is left out
+   (comment at the top of each file); statistics for the module (`f60_frame`, `f60_state`, `f60_lag`); who holds stock pacing is kept
+   for the diagnostics. `pacing_adaptive()` added (`fps60.h`, `x2.h`).
+4. `x\rows.cpp`, `x2\x2_rows.cpp`: the removed rows are out of the row tables.
+5. `x\rows\W2A-002.cpp`, `x2\rows\X2-W2A-002.cpp`: the movie's frame number is reported to the module (`f60_fmv`).
+   `x\rows\SMOOTH-003.cpp`, `x2\rows\X2-SMOOTH-003.cpp`: a logic tick drawn in place of a left-out render-only pass counts as a normal
+   logic pass for the limbs (`pacing_left_out()`).
+6. `x2\rows\X2-MAG-006.cpp`: the two free hooks written out as one assembler block each (clang has no labels across separate
+   `__asm` statements); the same instructions.
+7. `x\fps60.h`, `x2\x2.h` include `f60_compat.h`; `x\text_strings.h` is included inside `namespace fx`; include paths of MinHook.
+8. Build: clang (zig, target x86-windows-gnu) instead of MSVC. `f60_compat.h` / `f60_seh.cpp` give `__try` / `__except` (a frame
+   list per thread and a vectored exception handler for hardware faults; clang has no 32 bit SEH code generation for this target),
+   `_ReturnAddress`. Flags in `..\sources.txt`: `-fasm-blocks -fno-strict-aliasing -fwrapv -fno-delete-null-pointer-checks`.
+
+Settings: every row keeps the default of the source, except that diagnostic (`DIAG-*`), test (`DEV-*`), lab (`LAB-*`) and
+gameplay / interface option rows (`QOL-*`, `SR-003` soft reset, `X2-SAVE-001`, `X2-SAVE-002`) are off, and the mods' developer hotkeys
+(F6 - F11, numpad keys) are not polled (`[Debug] FFXFps60Hotkeys = 1` switches them on). `[Debug] FFXFps60Rows = "ROW=1,ROW-KEY=3"` in RevoFX's
+settings overrides a row for a test; `[Debug] FFXFps60Verbose = 1` lets the mods' periodic reports into the log.
+
+9. `x\fx_module.cpp` (2026-11-14): the frame rate is read through `f60_opt("Fps60Rate", 60)` (RevoFX has no such key: 60 as
+   before; `fps60exe\f60_host.cpp` of FFX_60fps.exe passes its `fps`).
+
+10. 2026-11-14, for FFX_60fps.exe / FFX-2_60fps.exe (inactive in the RevoFX module: `#ifdef F60_EXE`, or N = 2): rows VSYNC,
+    PERF-002, X2-VSYNC registered from `fps60exe/rows`; `config_str` from the INI; `pacing_adaptive_on`; N invocations per logic
+    tick and the limiter in `x2/x2_pacing.cpp`, with `X2-SMOOTH-001/002/003`, `X2-CLK-002`, `X2-TASK-001`, `X2-HD-001` following N.
+    docs/FPS60_EXE.md section 11.

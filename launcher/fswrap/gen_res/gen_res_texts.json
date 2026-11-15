@@ -1,0 +1,232 @@
+{
+ "header": [
+  "Advanced settings: FFX Enhanced",
+  "Erweiterte Einstellungen: FFX Enhanced",
+  "Paramètres avancés : FFX Enhanced",
+  "Impostazioni avanzate: FFX Enhanced",
+  "Ajustes avanzados: FFX Enhanced",
+  "詳細設定：FFX Enhanced",
+  "고급 설정: FFX Enhanced",
+  "進階設定：FFX Enhanced"
+ ],
+ "label": [
+  "Menu graphics",
+  "Menügrafik",
+  "Graphismes du menu",
+  "Grafica del menu",
+  "Gráficos del menú",
+  "メニューのグラフィック",
+  "메뉴 그래픽",
+  "選單圖像"
+ ],
+ "auto": [
+  "Automatic (by monitor)",
+  "Automatisch (nach Monitor)",
+  "Automatique (selon l'écran)",
+  "Automatica (in base al monitor)",
+  "Automático (según el monitor)",
+  "自動（モニターに合わせる）",
+  "자동 (모니터에 맞춤)",
+  "自動（依顯示器）"
+ ],
+ "orig": [
+  "Original (720p)",
+  "Original (720p)",
+  "Original (720p)",
+  "Originale (720p)",
+  "Original (720p)",
+  "オリジナル (720p)",
+  "원본 (720p)",
+  "原版 (720p)"
+ ],
+ "help": [
+  "Resolution of the launcher's menu graphics. Automatic: monitors below 1080 pixels high use the original metamenu.vbf, from 1080 to 1440 pixels metamenu_1440.vbf, higher ones metamenu_2160.vbf. If that file is missing, the other one is used, else the original. Takes effect when saved.",
+  "Auflösung der Menügrafik des Launchers. Automatisch: Monitore unter 1080 Pixel Höhe nutzen die originale metamenu.vbf, von 1080 bis 1440 Pixel metamenu_1440.vbf, höhere metamenu_2160.vbf. Fehlt diese Datei, wird die andere genutzt, sonst das Original. Gilt ab dem Speichern.",
+  "Résolution des graphismes du menu du lanceur. Automatique : les écrans de moins de 1080 pixels de haut utilisent le metamenu.vbf d'origine, de 1080 à 1440 pixels metamenu_1440.vbf, les plus hauts metamenu_2160.vbf. Si ce fichier manque, l'autre est utilisé, sinon l'original. Prend effet à l'enregistrement.",
+  "Risoluzione della grafica del menu del launcher. Automatica: i monitor alti meno di 1080 pixel usano il metamenu.vbf originale, da 1080 a 1440 pixel metamenu_1440.vbf, quelli più alti metamenu_2160.vbf. Se il file manca si usa l'altro, altrimenti l'originale. Ha effetto al salvataggio.",
+  "Resolución de los gráficos del menú del lanzador. Automático: los monitores de menos de 1080 píxeles de alto usan el metamenu.vbf original, de 1080 a 1440 píxeles metamenu_1440.vbf, los más altos metamenu_2160.vbf. Si falta ese archivo se usa el otro; si no, el original. Se aplica al guardar.",
+  "ランチャーのメニューグラフィックの解像度。自動：高さ 1080 ピクセル未満のモニターは元の metamenu.vbf、1080～1440 ピクセルは metamenu_1440.vbf、それ以上は metamenu_2160.vbf を使います。ファイルがない場合はもう一方、それもなければ元のファイルを使います。保存した時点で反映されます。",
+  "런처 메뉴 그래픽의 해상도. 자동: 높이 1080픽셀 미만의 모니터는 원본 metamenu.vbf, 1080~1440픽셀은 metamenu_1440.vbf, 그보다 높으면 metamenu_2160.vbf를 사용합니다. 파일이 없으면 다른 하나를, 그것도 없으면 원본을 사용합니다. 저장하면 적용됩니다.",
+  "啟動器選單圖像的解析度。自動：高度低於 1080 像素的顯示器使用原版 metamenu.vbf，1080 至 1440 像素使用 metamenu_1440.vbf，更高的使用 metamenu_2160.vbf。若該檔案不存在，則使用另一個，否則使用原版。儲存後生效。"
+ ],
+ "used": [
+  "Resources: {0}",
+  "Ressourcen: {0}",
+  "Ressources : {0}",
+  "Risorse: {0}",
+  "Recursos: {0}",
+  "リソース: {0}",
+  "리소스: {0}",
+  "資源: {0}"
+ ],
+ "compat_label": [
+  "Proton compatibility mode",
+  "Proton-Kompatibilitätsmodus",
+  "Mode de compatibilité Proton",
+  "Modalità di compatibilità Proton",
+  "Modo de compatibilidad con Proton",
+  "Proton互換モード",
+  "Proton 호환 모드",
+  "Proton 相容模式"
+ ],
+ "compat_help": [
+  "For SteamOS / Steam Deck. On: FFX.exe and FFX-2.exe are replaced by their 60 fps builds, so Steam and Proton start the games under their own file names. The originals are backed up first in backup_original (CRC checked). Off: the originals are restored. Takes effect when saved.",
+  "Für SteamOS / Steam Deck. Ein: FFX.exe und FFX-2.exe werden durch ihre 60-fps-Fassungen ersetzt, damit Steam und Proton die Spiele unter ihren eigenen Dateinamen starten. Die Originale werden vorher in backup_original gesichert (CRC geprüft). Aus: die Originale werden wiederhergestellt. Gilt ab dem Speichern.",
+  "Pour SteamOS / Steam Deck. Activé : FFX.exe et FFX-2.exe sont remplacés par leurs versions 60 fps, afin que Steam et Proton lancent les jeux sous leurs propres noms de fichier. Les originaux sont d'abord sauvegardés dans backup_original (CRC vérifié). Désactivé : les originaux sont restaurés. Prend effet à l'enregistrement.",
+  "Per SteamOS / Steam Deck. Attiva: FFX.exe e FFX-2.exe vengono sostituiti dalle loro versioni a 60 fps, così Steam e Proton avviano i giochi con i loro nomi di file. Gli originali vengono prima salvati in backup_original (CRC verificato). Disattiva: gli originali vengono ripristinati. Ha effetto al salvataggio.",
+  "Para SteamOS / Steam Deck. Activado: FFX.exe y FFX-2.exe se sustituyen por sus versiones de 60 fps, para que Steam y Proton inicien los juegos con sus propios nombres de archivo. Antes se guardan los originales en backup_original (CRC comprobado). Desactivado: se restauran los originales. Se aplica al guardar.",
+  "SteamOS / Steam Deck 向け。オン：FFX.exe と FFX-2.exe を 60 fps 版に置き換え、Steam と Proton が元のファイル名でゲームを起動できるようにします。オリジナルは先に backup_original に保存されます（CRC 確認済み）。オフ：オリジナルを元に戻します。保存した時点で反映されます。",
+  "SteamOS / Steam Deck용. 켜기: FFX.exe와 FFX-2.exe를 60 fps 버전으로 바꾸어 Steam과 Proton이 원래 파일 이름으로 게임을 실행하게 합니다. 원본은 먼저 backup_original에 백업됩니다(CRC 확인). 끄기: 원본을 복원합니다. 저장하면 적용됩니다.",
+  "適用於 SteamOS / Steam Deck。開啟：將 FFX.exe 與 FFX-2.exe 替換為 60 fps 版本，讓 Steam 與 Proton 以原本的檔名啟動遊戲。原始檔案會先備份到 backup_original（已檢查 CRC）。關閉：還原原始檔案。儲存後生效。"
+ ],
+ "tab_controls": [
+  "Controls",
+  "Steuerung",
+  "Commandes",
+  "Controlli",
+  "Controles",
+  "操作設定",
+  "조작",
+  "操作"
+ ],
+ "tab_advanced": [
+  "Advanced",
+  "Erweitert",
+  "Avancé",
+  "Avanzate",
+  "Avanzado",
+  "詳細設定",
+  "고급",
+  "進階"
+ ],
+ "revo_label": [
+  "Use RevoFX",
+  "RevoFX verwenden",
+  "Utiliser RevoFX",
+  "Usa RevoFX",
+  "Usar RevoFX",
+  "RevoFX を使用",
+  "RevoFX 사용",
+  "使用 RevoFX"
+ ],
+ "revo_help": [
+  "On: RevoFX's d3d11.dll is active (its graphics and its own 60 fps). Off: it is renamed to d3d11.dll.revofx-off, the games run without RevoFX and the launcher's own 60 fps patch is used. Switching on also switches the Proton compatibility mode off. From the next game start.",
+  "Ein: RevoFX' d3d11.dll ist aktiv (seine Grafik und seine eigenen 60 fps). Aus: sie wird in d3d11.dll.revofx-off umbenannt, die Spiele laufen ohne RevoFX und der 60-fps-Patch des Launchers wird genutzt. Einschalten schaltet auch den Proton-Kompatibilitätsmodus aus. Ab dem nächsten Spielstart.",
+  "Activé : le d3d11.dll de RevoFX est actif (ses graphismes et ses propres 60 fps). Désactivé : il est renommé en d3d11.dll.revofx-off, les jeux tournent sans RevoFX et le patch 60 fps du lanceur est utilisé. L'activation désactive aussi le mode de compatibilité Proton. Au prochain lancement du jeu.",
+  "Attiva: il d3d11.dll di RevoFX è attivo (la sua grafica e i suoi 60 fps). Disattiva: viene rinominato in d3d11.dll.revofx-off, i giochi girano senza RevoFX e si usa la patch 60 fps del launcher. Attivarlo disattiva anche la modalità di compatibilità Proton. Dal prossimo avvio del gioco.",
+  "Activado: el d3d11.dll de RevoFX está activo (sus gráficos y sus propios 60 fps). Desactivado: se renombra a d3d11.dll.revofx-off, los juegos funcionan sin RevoFX y se usa el parche de 60 fps del lanzador. Activarlo también desactiva el modo de compatibilidad con Proton. Desde el próximo inicio del juego.",
+  "オン：RevoFX の d3d11.dll が有効（RevoFX のグラフィックと 60 fps）。オフ：d3d11.dll.revofx-off に名前を変え、RevoFX なしで起動し、ランチャーの 60 fps パッチを使います。オンにすると Proton 互換モードもオフになります。次回のゲーム起動から。",
+  "켜기: RevoFX의 d3d11.dll이 활성화됩니다(RevoFX의 그래픽과 60 fps). 끄기: d3d11.dll.revofx-off로 이름이 바뀌고 RevoFX 없이 실행되며 런처의 60 fps 패치를 사용합니다. 켜면 Proton 호환 모드도 꺼집니다. 다음 게임 실행부터.",
+  "開啟：RevoFX 的 d3d11.dll 啟用（RevoFX 的畫面與 60 fps）。關閉：更名為 d3d11.dll.revofx-off，遊戲不使用 RevoFX，改用啟動器的 60 fps 修正。開啟時也會關閉 Proton 相容模式。從下次啟動遊戲起。"
+ ],
+ "defaults_label": [
+  "Defaults",
+  "Standardwerte",
+  "Par défaut",
+  "Predefiniti",
+  "Predeterminados",
+  "初期設定",
+  "기본값",
+  "預設值"
+ ],
+ "defaults_help": [
+  "Sets every setting to its default value, the 60 fps patch to its optimized setup (60 FPS). Not changed: resolution, screen mode, text and voice language, Use RevoFX and the Proton compatibility mode. Save with OK or Apply.",
+  "Setzt alle Einstellungen auf ihre Standardwerte, den 60-fps-Patch auf seine optimierte Einstellung (60 FPS). Nicht geändert werden Auflösung, Anzeigemodus, Text- und Sprachausgabe, RevoFX verwenden und der Proton-Kompatibilitätsmodus. Speichern mit O.k. oder Übernehmen.",
+  "Rétablit toutes les valeurs par défaut, le patch 60 fps dans sa configuration optimisée (60 FPS). Inchangés : résolution, mode d'affichage, langue du texte et des voix, Utiliser RevoFX et le mode de compatibilité Proton. Enregistrer avec OK ou Appliquer.",
+  "Riporta tutte le impostazioni ai valori predefiniti, la patch 60 fps alla configurazione ottimizzata (60 FPS). Non cambiano: risoluzione, modalità schermo, lingua del testo e delle voci, Usa RevoFX e la modalità di compatibilità Proton. Salva con OK o Applica.",
+  "Restablece todos los ajustes a sus valores predeterminados y el parche de 60 fps a su configuración optimizada (60 FPS). No cambian: resolución, modo de pantalla, idioma del texto y de las voces, Usar RevoFX y el modo de compatibilidad con Proton. Guarda con Aceptar o Aplicar.",
+  "すべての設定を初期値に、60 fps パッチを最適化設定（60 FPS）に戻します。解像度、画面モード、テキストと音声の言語、RevoFX を使用、Proton 互換モードは変更しません。OK または適用で保存します。",
+  "모든 설정을 기본값으로, 60 fps 패치를 최적화 설정(60 FPS)으로 되돌립니다. 해상도, 화면 모드, 텍스트와 음성 언어, RevoFX 사용, Proton 호환 모드는 바뀌지 않습니다. 확인 또는 적용으로 저장합니다.",
+  "將所有設定還原為預設值，60 fps 修正還原為最佳化設定（60 FPS）。不變更：解析度、顯示模式、文字與語音語言、使用 RevoFX 與 Proton 相容模式。以確定或套用儲存。"
+ ],
+ "defaults_done": [
+  "Default values set (resolution, screen mode, languages and the mode switches stay). Save with OK or Apply; Cancel keeps the old values.",
+  "Standardwerte gesetzt (Auflösung, Anzeigemodus, Sprachen und die Modus-Schalter bleiben). Speichern mit O.k. oder Übernehmen; Abbrechen behält die alten Werte.",
+  "Valeurs par défaut rétablies (résolution, mode d'affichage, langues et modes inchangés). Enregistrer avec OK ou Appliquer ; Annuler garde les anciennes valeurs.",
+  "Valori predefiniti impostati (risoluzione, modalità schermo, lingue e modalità restano). Salva con OK o Applica; Annulla mantiene i valori precedenti.",
+  "Valores predeterminados establecidos (resolución, modo de pantalla, idiomas y modos se mantienen). Guarda con Aceptar o Aplicar; Cancelar conserva los valores anteriores.",
+  "初期値を設定しました（解像度、画面モード、言語、モードはそのまま）。OK または適用で保存、キャンセルで元に戻ります。",
+  "기본값을 설정했습니다(해상도, 화면 모드, 언어, 모드는 유지). 확인 또는 적용으로 저장하고, 취소하면 이전 값이 유지됩니다.",
+  "已設為預設值（解析度、顯示模式、語言與模式不變）。以確定或套用儲存；取消則保留舊值。"
+ ],
+ "skip_label": [
+  "Skip logos and autosave notice",
+  "Logos und Autosave-Hinweis überspringen",
+  "Passer logos et avis de sauvegarde",
+  "Salta loghi e avviso di salvataggio",
+  "Omitir logos y aviso de autoguardado",
+  "ロゴとオートセーブの注意をスキップ",
+  "로고와 자동 저장 안내 건너뛰기",
+  "略過標誌與自動存檔提示"
+ ],
+ "skip_help": [
+  "On: both games start without their opening screen - the logos (Square Enix, Virtuos, CRI, Dolby) and the autosave notice. Needs the launcher's 60 fps patch (works at 30 fps too). From the next game start.",
+  "Ein: Beide Spiele starten ohne ihren Startbildschirm - die Logos (Square Enix, Virtuos, CRI, Dolby) und den Autosave-Hinweis. Braucht den 60-fps-Patch des Launchers (wirkt auch bei 30 fps). Ab dem nächsten Spielstart.",
+  "Activé : les deux jeux démarrent sans leur écran d'ouverture - les logos (Square Enix, Virtuos, CRI, Dolby) et l'avis de sauvegarde automatique. Nécessite le patch 60 fps du lanceur (aussi à 30 fps). Au prochain lancement du jeu.",
+  "Attiva: entrambi i giochi partono senza la schermata iniziale - i loghi (Square Enix, Virtuos, CRI, Dolby) e l'avviso di salvataggio automatico. Richiede la patch 60 fps del launcher (anche a 30 fps). Dal prossimo avvio del gioco.",
+  "Activado: ambos juegos arrancan sin su pantalla inicial: los logos (Square Enix, Virtuos, CRI, Dolby) y el aviso de autoguardado. Necesita el parche de 60 fps del lanzador (también a 30 fps). Desde el próximo inicio del juego.",
+  "オン：両方のゲームがオープニング画面（ロゴとオートセーブの注意）なしで起動します。ランチャーの 60 fps パッチが必要です（30 fps でも有効）。次回のゲーム起動から。",
+  "켜기: 두 게임 모두 시작 화면(로고와 자동 저장 안내) 없이 시작합니다. 런처의 60 fps 패치가 필요합니다(30 fps에서도 작동). 다음 게임 실행부터.",
+  "開啟：兩款遊戲啟動時略過開頭畫面（標誌與自動存檔提示）。需要啟動器的 60 fps 修正（在 30 fps 也有效）。從下次啟動遊戲起。"
+ ],
+ "nolaunch_label": [
+  "Don't restart the launcher",
+  "Launcher nicht neu starten",
+  "Ne pas relancer le lanceur",
+  "Non riavviare il launcher",
+  "No reiniciar el lanzador",
+  "ランチャーを再起動しない",
+  "런처 다시 시작 안 함",
+  "不重新啟動啟動器"
+ ],
+ "nolaunch_help": [
+  "On: when a game is quit, it does not start the launcher again (the games do so as shipped). Needs the launcher's 60 fps patch (works at 30 fps too). From the next game start.",
+  "Ein: Nach dem Beenden eines Spiels startet es den Launcher nicht erneut (das tun die Spiele von sich aus). Braucht den 60-fps-Patch des Launchers (wirkt auch bei 30 fps). Ab dem nächsten Spielstart.",
+  "Activé : quand un jeu est quitté, il ne relance pas le lanceur (ce que les jeux font d'origine). Nécessite le patch 60 fps du lanceur (aussi à 30 fps). Au prochain lancement du jeu.",
+  "Attiva: quando si esce da un gioco, questo non riavvia il launcher (lo fanno i giochi originali). Richiede la patch 60 fps del launcher (anche a 30 fps). Dal prossimo avvio del gioco.",
+  "Activado: al salir de un juego, este no vuelve a iniciar el lanzador (lo hacen los juegos originales). Necesita el parche de 60 fps del lanzador (también a 30 fps). Desde el próximo inicio del juego.",
+  "オン：ゲームを終了してもランチャーを再起動しません（元のゲームは再起動します）。ランチャーの 60 fps パッチが必要です（30 fps でも有効）。次回のゲーム起動から。",
+  "켜기: 게임을 종료해도 런처를 다시 시작하지 않습니다(원래 게임은 다시 시작합니다). 런처의 60 fps 패치가 필요합니다(30 fps에서도 작동). 다음 게임 실행부터.",
+  "開啟：結束遊戲後不會再次啟動啟動器（原版遊戲會重新啟動）。需要啟動器的 60 fps 修正（在 30 fps 也有效）。從下次啟動遊戲起。"
+ ],
+ "efl_label": [
+  "External File Loader (EFL)",
+  "External File Loader (EFL)",
+  "External File Loader (EFL)",
+  "External File Loader (EFL)",
+  "External File Loader (EFL)",
+  "外部ファイルローダー (EFL)",
+  "외부 파일 로더 (EFL)",
+  "外部檔案載入器 (EFL)"
+ ],
+ "efl_help": [
+  "On: the games load ffgriever's External File Loader (modules\\ff10-file-loader.dll in the game folder or in EFL\\) and read unpacked game files from data\\mods. EFL's dinput8.dll is not needed. Needs the launcher's 60 fps patch (works at 30 fps too). From the next game start.",
+  "Ein: Die Spiele laden ffgrievers External File Loader (modules\\ff10-file-loader.dll im Spielordner oder in EFL\\) und lesen entpackte Spieldateien aus data\\mods. Die dinput8.dll des EFL wird nicht gebraucht. Braucht den 60-fps-Patch des Launchers (wirkt auch bei 30 fps). Ab dem nächsten Spielstart.",
+  "Activé : les jeux chargent l'External File Loader de ffgriever (modules\\ff10-file-loader.dll dans le dossier du jeu ou dans EFL\\) et lisent les fichiers décompressés depuis data\\mods. Le dinput8.dll d'EFL n'est pas nécessaire. Nécessite le patch 60 fps du lanceur (aussi à 30 fps). Au prochain lancement du jeu.",
+  "Attiva: i giochi caricano l'External File Loader di ffgriever (modules\\ff10-file-loader.dll nella cartella del gioco o in EFL\\) e leggono i file estratti da data\\mods. Il dinput8.dll di EFL non serve. Richiede la patch 60 fps del launcher (anche a 30 fps). Dal prossimo avvio del gioco.",
+  "Activado: los juegos cargan el External File Loader de ffgriever (modules\\ff10-file-loader.dll en la carpeta del juego o en EFL\\) y leen los archivos extraídos de data\\mods. El dinput8.dll de EFL no hace falta. Necesita el parche de 60 fps del lanzador (también a 30 fps). Desde el próximo inicio del juego.",
+  "オン：ffgriever の External File Loader（ゲームフォルダーまたは EFL\\ 内の modules\\ff10-file-loader.dll）を読み込み、展開したゲームファイルを data\\mods から読みます。EFL の dinput8.dll は不要です。ランチャーの 60 fps パッチが必要です（30 fps でも有効）。次回のゲーム起動から。",
+  "켜기: ffgriever의 External File Loader(게임 폴더 또는 EFL\\의 modules\\ff10-file-loader.dll)를 불러와 압축을 푼 게임 파일을 data\\mods에서 읽습니다. EFL의 dinput8.dll은 필요 없습니다. 런처의 60 fps 패치가 필요합니다(30 fps에서도 작동). 다음 게임 실행부터.",
+  "開啟：遊戲會載入 ffgriever 的 External File Loader（遊戲資料夾或 EFL\\ 內的 modules\\ff10-file-loader.dll），並從 data\\mods 讀取解包的遊戲檔案。不需要 EFL 的 dinput8.dll。需要啟動器的 60 fps 修正（在 30 fps 也有效）。從下次啟動遊戲起。"
+ ],
+ "uw_label": [
+  "Ultrawide (experimental)",
+  "Ultrawide (experimentell)",
+  "Ultralarge (expérimental)",
+  "Ultrawide (sperimentale)",
+  "Ultrapanorámico (experimental)",
+  "ウルトラワイド（試験的）",
+  "울트라와이드 (실험적)",
+  "超寬螢幕（實驗性）"
+ ],
+ "uw_help": [
+  "EXPERIMENTAL. On: both games use the full width of screens wider than 16:9 (field of view, menus, battle and map displays). Errors in the picture are possible. Choose the screen's resolution under Video. Needs the launcher's 60 fps patch (works at 30 fps too). From the next game start.",
+  "EXPERIMENTELL. Ein: Beide Spiele nutzen die volle Breite von Bildschirmen, die breiter als 16:9 sind (Sichtfeld, Menüs, Kampf- und Kartenanzeigen). Bildfehler sind möglich. Unter Video die Auflösung des Bildschirms wählen. Braucht den 60-fps-Patch des Launchers (wirkt auch bei 30 fps). Ab dem nächsten Spielstart.",
+  "EXPÉRIMENTAL. Activé : les deux jeux utilisent toute la largeur des écrans plus larges que 16:9 (champ de vision, menus, affichages de combat et de carte). Des défauts d'image sont possibles. Choisir la résolution de l'écran sous Vidéo. Nécessite le patch 60 fps du lanceur (aussi à 30 fps). Au prochain lancement du jeu.",
+  "SPERIMENTALE. Attiva: entrambi i giochi usano tutta la larghezza degli schermi più larghi di 16:9 (campo visivo, menu, indicatori di battaglia e mappa). Sono possibili difetti d'immagine. Scegliere la risoluzione dello schermo in Video. Richiede la patch 60 fps del launcher (anche a 30 fps). Dal prossimo avvio del gioco.",
+  "EXPERIMENTAL. Activado: ambos juegos usan todo el ancho de las pantallas más anchas que 16:9 (campo de visión, menús, indicadores de combate y mapa). Puede haber errores de imagen. Elige la resolución de la pantalla en Vídeo. Necesita el parche de 60 fps del lanzador (también a 30 fps). Desde el próximo inicio del juego.",
+  "試験的な機能です。オン：16:9 より横長の画面で、両方のゲームが画面幅いっぱいに表示されます（視野、メニュー、バトルやマップの表示）。表示が乱れることがあります。ビデオで画面の解像度を選んでください。ランチャーの 60 fps パッチが必要です。次回のゲーム起動から。",
+  "실험적 기능입니다. 켜기: 16:9보다 넓은 화면에서 두 게임이 화면 전체 너비를 사용합니다(시야, 메뉴, 전투 및 지도 표시). 화면 오류가 생길 수 있습니다. 비디오에서 화면 해상도를 선택하세요. 런처의 60 fps 패치가 필요합니다. 다음 게임 실행부터.",
+  "實驗性功能。開啟：在比 16:9 更寬的螢幕上，兩款遊戲會使用完整寬度（視野、選單、戰鬥與地圖顯示）。可能出現畫面錯誤。請在視訊中選擇螢幕的解析度。需要啟動器的 60 fps 修正。從下次啟動遊戲起。"
+ ]
+}
