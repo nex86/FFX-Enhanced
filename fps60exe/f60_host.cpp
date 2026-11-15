@@ -189,8 +189,13 @@ static void load_efl(void) {
     if (moved) SetCurrentDirectoryA(cwd);
     if (!s) { logf("[%s] file loader: %s did not load (error %lu) - not loaded", g_name, sl, es); return; }
     if (!m) { logf("[%s] file loader: %s did not load (error %lu; it needs the Visual C++ 2015-2022 x86 runtime)", g_name, mod, em); return; }
-    const char *(*ver)(void) = (const char *(*)(void))GetProcAddress(m, "FF10HgetVer"); const char *(*nm)(void) = (const char *(*)(void))GetProcAddress(m, "FF10HgetName");
-    logf("[%s] file loader: %s %s loaded from %s (its log: %shook.log)", g_name, nm ? nm() : "ff10-file-loader", ver ? ver() : "", mod, moved ? base : g_dir);
+    // the module's exports (ff10-file-loader 1.2.0.0): const char *__cdecl FF10HgetName(void) and
+    // void __cdecl FF10HgetVer(int out[3]) - it writes major, minor, patch into the caller's array (called without one it
+    // writes through a stray stack value: the crash at the game's start in FFX Enhanced 0.90 Beta)
+    typedef const char *(__cdecl *name_fn)(void); typedef void (__cdecl *ver_fn)(int *);
+    name_fn nm = (name_fn)GetProcAddress(m, "FF10HgetName"); ver_fn vf = (ver_fn)GetProcAddress(m, "FF10HgetVer");
+    int v[8] = { 0 }; char vs[48] = ""; if (vf) { vf(v); snprintf(vs, sizeof vs, "%d.%d.%d", v[0], v[1], v[2]); }
+    logf("[%s] file loader: %s %s loaded from %s (its log: %shook.log)", g_name, nm ? nm() : "ff10-file-loader", vs, mod, moved ? base : g_dir);
 }
 
 // ultrawide=1 (experimental): the ultrawide patch set of the RevoFX FFX module (module\ffx_uw.c + ffx_uw_data.h: SUWSF patches
