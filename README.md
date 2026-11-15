@@ -3,8 +3,8 @@
 New launcher and DLL-free 60 fps patch for **FINAL FANTASY X/X-2 HD Remaster** (Steam, PC; app id 359870).
 Unofficial fan modification. Works with the current Steam build only (see [Compatibility](#compatibility)).
 
-> **Beta.** Most of this was tested on Windows 11 without long play sessions. Nothing was tested on Steam Deck / SteamOS yet.
-> Back up your saves. Items marked **experimental** below may break the picture, crash the game or stop working after a game update.
+> **Beta.** Most features were tested on Windows 11 and on Steam Deck (SteamOS / Proton). Back up your saves anyway.
+> Items marked **experimental** below may break the picture, crash the game or stop working after a game update.
 
 ## Features
 
@@ -39,15 +39,13 @@ Unofficial fan modification. Works with the current Steam build only (see [Compa
 
 | Part | Status | Risk |
 |---|---|---|
-| 60 fps in FFX | title screens and short play tested | timing bugs in single scenes possible |
-| 60 fps in FFX-2 | starts, patch installs; little play | as above |
-| 90 / 120 / 240 fps | **not tested** | animation/physics/timing errors; FFX-2 above 60 is new |
-| Ultrawide | **not tested in game** (patches verified offline) | stretched or misplaced UI, wrong FOV, crashes |
-| External File Loader | **not tested in game** with the patched EXEs | EFL may refuse the modified EXE ("unsupported game version"); then nothing is loaded |
-| Controls tab | not tested in game | punctuation keys (`- = [ ] \ ; ' , . /`) are mapped by US layout and may differ on other layouts; if the game rejects a list it resets all bindings |
-| Skip logos / no launcher restart | not tested in game | intro or exit may hang |
-| `optional\dbghelp.dll` | not tested in game | - |
-| Proton / Steam Deck | **not tested** | everything above |
+| 60 fps (FFX, FFX-2) | tested | timing bugs in single scenes possible |
+| 90 / 120 / 240 fps | **experimental** | animation/physics/timing errors; FFX-2 above 60 is new |
+| Ultrawide | **experimental** | stretched or misplaced UI, wrong FOV, crashes |
+| External File Loader | **experimental** | EFL may refuse the modified EXE ("unsupported game version"); then nothing is loaded |
+| Controls tab | tested | punctuation keys (`- = [ ] \ ; ' , . /`) are mapped by US layout and may differ on other layouts; if the game rejects a list it resets all bindings |
+| Skip logos / no launcher restart | tested | may need an update after a game patch |
+| Steam Deck / SteamOS (Proton) | tested | other Proton versions may behave differently |
 | Windows Defender | may flag `FFX-2_enh.exe` (false positive "Wacatac") | add the game folder as exclusion, then Apply again |
 
 ## Install (Windows)
